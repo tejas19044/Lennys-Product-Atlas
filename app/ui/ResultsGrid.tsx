@@ -21,6 +21,7 @@ function row(label: string, tags: string[], set: Set<string>, colorVar: string) 
   if (!tags?.length) return null;
   return (
     <div
+      className="tag-row"
       style={{
         fontSize: 11,
         color: "var(--muted)",
@@ -53,6 +54,7 @@ export default function ResultsGrid({ rows, selected, onOpen }: Props) {
       {rows.map((ep) => (
         <div
           key={`${ep.guest}-${ep.companyName}-${ep.srNo || ""}`}
+          className="results-card"
           onClick={() => onOpen(ep)}
           style={{
             background: "var(--panel)",

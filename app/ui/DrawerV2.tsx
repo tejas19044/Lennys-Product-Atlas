@@ -235,6 +235,7 @@ export default function DrawerV2({
       />
 
       <div
+        className="drawer-overlay"
         style={{
           position: "fixed",
           inset: 0,
@@ -246,6 +247,7 @@ export default function DrawerV2({
         }}
       >
         <div
+          className="drawer-panel"
           style={{
             ...panelStyle,
             width: "100%",

@@ -49,6 +49,7 @@ export default function Sidebar({
 }: Props) {
   return (
     <aside
+      className="sidebar-mobile"
       style={{
         position: "sticky",
         top: 40,

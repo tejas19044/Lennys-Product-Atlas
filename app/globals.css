@@ -173,3 +173,71 @@ a {
     text-align: center;
   }
 }
+
+/* Mobile: smaller padding, header, overflow fixes */
+@media (max-width: 600px) {
+  .brand-header {
+    padding: 40px 16px 32px 16px;
+    margin-bottom: 24px;
+  }
+
+  .brand-header h1 {
+    font-size: 28px;
+  }
+
+  .brand-header .hero-sub {
+    font-size: 15px;
+  }
+
+  .brand-header .powered-by {
+    letter-spacing: 0.2em;
+    font-size: 9px;
+  }
+
+  .shell {
+    padding: 0 16px 40px 16px;
+  }
+
+  .page-footer {
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .app-grid {
+    gap: 24px;
+  }
+
+  .results-grid {
+    gap: 16px;
+  }
+
+  /* Sidebar: no sticky on mobile so it scrolls normally */
+  .sidebar-mobile {
+    position: static !important;
+    height: auto !important;
+    top: 0 !important;
+  }
+
+  /* Results cards: smaller padding, prevent overflow */
+  .results-card {
+    padding: 20px !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .tag-row strong {
+    min-width: 50px !important;
+  }
+
+  /* Drawer: full-width on mobile */
+  .drawer-overlay {
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+
+  .drawer-panel {
+    max-width: 100% !important;
+    height: 95vh !important;
+    border-radius: var(--radius2) var(--radius2) 0 0 !important;
+  }
+}
