@@ -173,6 +173,11 @@ export default function DrawerV2({
   const openWithPrompt = async (
     platform: "chatgpt" | "claude" | "perplexity" | "gemini"
   ) => {
+    // On mobile: open blank window synchronously to avoid popup blocker
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const w = isMobile ? window.open("about:blank", "_blank") : null;
+    if (w) w.opener = null;
+
     setAnalyzeLoading(true);
     setAnalyzeError(null);
     try {
@@ -190,13 +195,19 @@ export default function DrawerV2({
       } else {
         await navigator.clipboard.writeText(prompt);
         setCopiedFor(platform);
-        // Claude, Perplexity, Gemini do not support prefilled URLs; open base URL
         if (platform === "claude") targetUrl = CLAUDE_URL;
         else if (platform === "perplexity") targetUrl = PERPLEXITY_URL;
         else targetUrl = GEMINI_URL;
       }
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
+
+      if (w && !w.closed) {
+        w.location.href = targetUrl;
+      } else {
+        // Desktop: standard open (works); Mobile fallback if popup blocked
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (err) {
+      if (w && !w.closed) w.close();
       setAnalyzeError(err instanceof Error ? err.message : "Failed to generate prompt");
     } finally {
       setAnalyzeLoading(false);
@@ -263,6 +274,7 @@ export default function DrawerV2({
         >
           {/* Header */}
           <div
+            className="drawer-header"
             style={{
               padding: "32px 40px 24px",
               textAlign: "center",
@@ -295,6 +307,7 @@ export default function DrawerV2({
             </h2>
 
             <button
+              className="drawer-close"
               onClick={onClose}
               style={{
                 position: "absolute",
@@ -327,6 +340,7 @@ export default function DrawerV2({
           {/* Frameworks (matches home page card) */}
           {episode.frameworks && (
             <div
+              className="drawer-section"
               style={{
                 padding: "16px 40px",
                 borderBottom: "1px solid var(--border)",
@@ -373,6 +387,7 @@ export default function DrawerV2({
           {/* CEO Summary */}
           {episode.ceoSummary && (
             <div
+              className="drawer-section"
               style={{
                 padding: "20px 40px",
                 borderBottom: "1px solid var(--border)",
@@ -422,6 +437,7 @@ export default function DrawerV2({
             episode.level3Tags?.length ||
             episode.level4Tags?.length) > 0 && (
             <div
+              className="drawer-section"
               style={{
                 padding: "16px 40px",
                 borderBottom: "1px solid var(--border)",
@@ -447,6 +463,7 @@ export default function DrawerV2({
 
           {/* Content Area */}
           <div
+            className="drawer-content"
             style={{
               flex: 1,
               overflowY: "auto",
@@ -481,10 +498,11 @@ export default function DrawerV2({
                   margin: 0,
                 }}
               >
-                System prompt is auto-saved on your device. Just hit Ctrl+V on the chat of your favourite AI and upload the transcript.
+                System prompt is auto-saved on your device. Paste it in the AI chat (Ctrl+V or long-press) and upload the transcript.
               </p>
             </div>
             <div
+              className="drawer-buttons"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 1fr)",
@@ -548,6 +566,7 @@ export default function DrawerV2({
           {/* Footer */}
           {transcript && (
             <div
+              className="drawer-footer"
               style={{
                 padding: "20px 40px",
                 borderTop: "1px solid var(--border)",

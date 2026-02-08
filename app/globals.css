@@ -229,7 +229,7 @@ a {
     min-width: 50px !important;
   }
 
-  /* Drawer: full-width on mobile */
+  /* Drawer: full-width on mobile, tighter padding */
   .drawer-overlay {
     padding: 8px !important;
     align-items: flex-end !important;
@@ -239,5 +239,48 @@ a {
     max-width: 100% !important;
     height: 95vh !important;
     border-radius: var(--radius2) var(--radius2) 0 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .drawer-header {
+    padding: 24px 16px 20px !important;
+  }
+
+  .drawer-header h2 {
+    font-size: 22px !important;
+  }
+
+  .drawer-close {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    top: 16px !important;
+    right: 16px !important;
+  }
+
+  .drawer-section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  .drawer-content {
+    padding: 24px 16px !important;
+    flex: none !important;
+    overflow: visible !important;
+  }
+
+  .drawer-footer {
+    padding: 16px !important;
+  }
+
+  /* Touch-friendly LLM buttons (min 44px), stack on narrow screens */
+  .drawer-content button {
+    min-height: 44px !important;
+  }
+
+  .drawer-buttons {
+    grid-template-columns: 1fr !important;
   }
 }
