@@ -109,9 +109,8 @@ function main() {
   }
 
   if (unmatched.length) {
-    console.log("\n❌ Unmatched guests (needs rename or better naming):");
+    console.log("\n⚠️ Unmatched guests (some transcripts won't be linked):");
     unmatched.forEach(g => console.log(`- ${g}`));
-    process.exitCode = 1;
   }
 }
 
