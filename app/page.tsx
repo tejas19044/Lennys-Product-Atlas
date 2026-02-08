@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PROMPT_TEXT } from "./lib/prompt";
 import Sidebar from "./ui/Sidebar";
 import ResultsGrid from "./ui/ResultsGrid";
-import Drawer from "./ui/Drawer";
+import DrawerV2 from "./ui/DrawerV2";
 import { parseCSV, splitTags, normalizeKey } from "./ui/csv";
 
 export type EpisodeRow = {
@@ -23,7 +22,7 @@ export type EpisodeRow = {
 
 type IndexMap = Record<string, string>;
 
-export default function Page() {
+function PageContent() {
   const [data, setData] = useState<EpisodeRow[]>([]);
   const [indexMap, setIndexMap] = useState<IndexMap>({});
 
@@ -181,43 +180,51 @@ export default function Page() {
 
   return (
     <>
-      <header className="brand-header">
-        <h1>Product Atlas</h1>
-        <p>Powered by Lenny&apos;s Podcast</p>
-      </header>
+      <div className="page-wrapper">
+        <header className="brand-header">
+          <h1>Product Atlas</h1>
+          <p className="hero-sub">One Place to Explore a Goldmine of Product Insights.</p>
+          <p className="powered-by">Powered by Lenny&apos;s Podcast</p>
+        </header>
 
-      <div className="shell">
-        <div className="app-grid">
-          <Sidebar
-            vocab={vocab}
-            selected={selected}
-            onToggle={onToggle}
-            onClear={clearAll}
-            search={search}
-            setSearch={setSearch}
-            tagCounts={tagCounts}
-            resultCount={filtered.length}
-            companies={companies}
-            selectedCompany={selectedCompany}
-            setSelectedCompany={setSelectedCompany}
-          />
-
-          <main>
-            <ResultsGrid
-              rows={filtered}
+        <div className="shell">
+          <div className="app-grid">
+            <Sidebar
+              vocab={vocab}
               selected={selected}
-              onOpen={(ep) => setOpenEpisode(ep)}
+              onToggle={onToggle}
+              onClear={clearAll}
+              search={search}
+              setSearch={setSearch}
+              tagCounts={tagCounts}
+              resultCount={filtered.length}
+              companies={companies}
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
             />
-          </main>
+
+            <main>
+              <ResultsGrid
+                rows={filtered}
+                selected={selected}
+                onOpen={(ep) => setOpenEpisode(ep)}
+              />
+            </main>
+          </div>
         </div>
+
+        <footer className="page-footer">
+          Built by Tejas Dhekane
+        </footer>
       </div>
 
       {openEpisode && (
-        <Drawer
-          episode={openEpisode}
-          onClose={() => setOpenEpisode(null)}
-        />
+        <DrawerV2 episode={openEpisode} onClose={() => setOpenEpisode(null)} />
       )}
     </>
   );
+}
+
+export default function Page() {
+  return <PageContent />;
 }

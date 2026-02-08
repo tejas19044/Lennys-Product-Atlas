@@ -7,35 +7,41 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Reverted Clean Schema (Camel Case)
+// Executive PM Dashboard Schema
 type SummaryJSON = {
-  tldr: {
-    coreTakeaways: string[];
+  overview: {
+    executiveBrief: string; // 2-3 sentence compact summary
+    coreTakeaways: string[]; // 3-5 bullets, mechanism-forward
   };
-  aboutSpeaker: {
-    who: string;
-    credibility: string[];
-    philosophy: string;
-  };
-  company: {
-    name: string;
-    businessModel: string;
-    customer: string;
-    winningLooksLike: string;
-    description: string;
-  };
-  podcastSummary: {
-    paragraphs: string[];
-    majorPoints: string[];
-  };
-  keyHighlights: string[]; // Reverted to string array to support "[Label] Text" format
-  memorableQuotes: { quote: string; why: string }[];
+  insights: {
+    tag: "Strategy" | "Execution" | "Growth" | "Leadership" | "Career" | "GTM" | "AI" | "Product" | "Research" | "Metrics";
+    insight: string; // <= 20 words, one-liner
+    evidence: {
+      time: string; // mm:ss or early|mid|late
+      cue: string; // short paraphrase
+    };
+  }[];
   frameworks: {
     name: string;
-    explanation: string;
-    actionableInsight: string; // "how to use tomorrow"
+    whenToUse: string; // 1 line
+    steps: string[]; // 3-7 bullets
+    pitfalls: string[]; // 1-3 bullets
+    evidence: {
+      time: string;
+      cue: string;
+    }[];
   }[];
-  whereThisIsUseful: string[];
+  about: {
+    speaker: {
+      who: string; // 1 sentence
+      credibility: string[]; // max 4 bullets
+      philosophy: string | null; // 1 sentence or null
+    };
+    company: {
+      name: string;
+      context: string; // 1 sentence or null
+    };
+  };
   youtubeVideoId: string | null;
 };
 
@@ -59,6 +65,11 @@ export async function POST(req: Request) {
     const guest = String(body?.guest || "");
     const company = String(body?.companyName || "");
     const ceoSummary = String(body?.ceoSummary || "");
+    const level1Tags = Array.isArray(body?.level1Tags) ? body.level1Tags : [];
+    const level2Tags = Array.isArray(body?.level2Tags) ? body.level2Tags : [];
+    const level3Tags = Array.isArray(body?.level3Tags) ? body.level3Tags : [];
+    const level4Tags = Array.isArray(body?.level4Tags) ? body.level4Tags : [];
+    const episodeTags = [...level1Tags, ...level2Tags, ...level3Tags, ...level4Tags].filter(Boolean);
 
     console.log("API Received Transcript Length:", transcriptRaw.length);
 
@@ -69,60 +80,111 @@ export async function POST(req: Request) {
     const { text: transcript, truncated } = clampTranscript(transcriptRaw);
 
     const system = `
-You are a senior Product Leader (CPO-level). Summarize the provided podcast transcript with executive clarity for a Product Manager with ~5 years experience.
+You are an executive Product Leader and knowledge-extraction analyst for a Product Management "Decision Routing" dashboard.
 
-GROUND RULES
-- Transcript is the primary source of truth.
-- You may use public web info (Lenny’s site, company site) only for speaker/company background. Do not invent transcript claims.
-- If something is not in the transcript, write: “Not mentioned in transcript.”
-- High signal, no fluff. Short paragraphs and bullets.
-- Minmize reasoning tokens. Go straight to the answer.
+This is NOT a podcast summary task.
+Your job is to extract modular, UI-ready knowledge blocks that help a busy PM understand the episode in 5 seconds and apply it immediately.
+
+UI CONTRACT (drawer with tabs)
+You must produce content that cleanly maps to:
+1) OVERVIEW: a compact executive briefing (minimal scroll)
+2) INSIGHTS: a ranked list of tagged one-liners ("intel rows")
+3) ABOUT: stable speaker/company context
+
+PRIMARY OUTPUT PRIORITY
+Framework Cards are the most valuable artifact. Treat them as reusable knowledge blocks (screenshot-ready), not plain text.
+
+STYLE
+- Executive, calm, concise. No casual tone. No emojis. No marketing language.
+- High information density. Short sentences. Bullets over paragraphs.
+- Avoid generic advice. If a sentence could apply to most podcasts, delete it.
+
+GROUNDING / TRUTHFULNESS
+- The transcript is the source of truth. Do not invent facts, metrics, names, or claims.
+- If something is not supported by the transcript, output null/empty or explicitly "Not mentioned in transcript."
+- Do not guess YouTube IDs or external details.
+
+ANTI-GENERIC FILTER (MANDATORY)
+Before finalizing, remove or rewrite any item that:
+- lacks a concrete mechanism (steps, heuristics, guardrails, diagnostics, trade-offs), OR
+- is vague ("focus on…", "align…", "optimize…") without a specific how, OR
+- cannot be traced to a specific moment in the transcript.
+
+EVIDENCE ANCHORS (MANDATORY)
+Every non-trivial claim must include an evidence anchor:
+- time: use mm:ss if present; otherwise use {early|mid|late}
+- cue: a short paraphrase that uniquely identifies where it came from
+Anchors must be minimal; do not paste long quotes.
+
+FRAMEWORK CARD RULES
+A framework card must include:
+- Name (named if present; otherwise synthesize ONLY if transcript implies a repeatable method)
+- When to use (1 line)
+- Steps or Rules (3–7 bullets)
+- Pitfalls (1–3 bullets)
+- Evidence anchors (1–3)
+
+INSIGHTS ("INTEL ROWS") RULES
+Insights must be:
+- Ranked by usefulness (most important first)
+- Tagged with a label from the allowed set (Strategy, Execution, Growth, Leadership, Career, GTM, AI, Product, Research, Metrics)
+- One line each (<= 20 words), mechanism-forward, non-generic
+- Evidence anchored
+
+ABOUT TAB RULES
+- Who the speaker is (1 sentence) + credibility bullets (max 4) + product philosophy (1 sentence) ONLY if supported.
+- Company context ONLY if supported.
+
+OUTPUT DISCIPLINE
+Optimize for scannability and reusability. The drawer should feel like an executive briefing panel, not an essay.
 `.trim();
+
+    const tagFocusBlock = episodeTags.length
+      ? `
+EPISODE TAGS (PRIORITIZE THESE THEMES):
+Focus insights and takeaways specifically on these episode tags: ${episodeTags.join(", ")}
+Prioritize insights that relate to these themes. The insight tag field should still use the allowed set (Strategy, Execution, etc.) but the content must be grounded in the episode's Level 1-4 tags.
+`
+      : "";
 
     const user = `
 Guest: ${guest}
 Company: ${company}
 Existing Summary Context: ${ceoSummary}
+${tagFocusBlock}
 
 OUTPUT FORMAT (STRICT JSON):
-Target 900–1300 words total content.
 
-1. TL;DR:
-- 4 core takeaways (<= 18 words each)
+1. OVERVIEW TAB:
+- executiveBrief: 2-3 sentence compact summary (what happened, why it matters)
+- coreTakeaways: 3-5 bullets (<= 20 words each), mechanism-forward, non-generic
 
-2. About the Speaker:
-- Who they are (1 sentence)
-- Credibility signals (max 4 bullets)
-- Product philosophy (1 sentence)
+2. INSIGHTS TAB (ranked by usefulness, most important first):
+- Array of insight objects, each with:
+  * tag: one of [Strategy, Execution, Growth, Leadership, Career, GTM, AI, Product, Research, Metrics]
+  * insight: one-liner (<= 20 words), mechanism-forward
+  * evidence: { time: "mm:ss or early|mid|late", cue: "short paraphrase" }
+- Target 8-12 insights total
 
-3. Company:
-- Name, Business Model, Customer, What "winning" looks like (<= 14 words each)
-- Company Description: CEO/board-level one-liner.
+3. FRAMEWORKS (screenshot-ready cards):
+- Up to 3 framework objects, each with:
+  * name: (use if named explicitly, otherwise synthesize ONLY if repeatable method exists)
+  * whenToUse: 1 line describing when to apply it
+  * steps: 3-7 bullets (concrete actions, heuristics, or rules)
+  * pitfalls: 1-3 bullets (what to avoid or watch for)
+  * evidence: array of 1-3 objects with { time, cue }
 
-4. Podcast Summary:
-- 2–3 short paragraphs summary.
-- 8–12 bullets capturing major points in order.
+4. ABOUT TAB:
+- speaker:
+  * who: 1 sentence
+  * credibility: max 4 bullets (only if supported by transcript)
+  * philosophy: 1 sentence or null
+- company:
+  * name: company name
+  * context: 1 sentence or null (only if supported)
 
-5. Key Highlights:
-- Exactly 7 bullets.
-- Start each with a label: [Idea] [Counterintuitive] [Strategy] [Execution] [Leadership] [Growth] [Career] [GTM] [AI]
-- Keep each <= 20 words.
-
-6. Memorable Quotes:
-- Exactly 5 quotes (<= 25 words).
-- Add "Why: <one sentence>" for each.
-- Quotes MUST be self-sufficient and trackable back to this podcast. Avoid random fragments.
-
-7. Frameworks (Deep Explanation):
-- Identify up to 3 frameworks.
-- If no explicit named framework exists, SYNTHESIZE one from the guest's methodology (e.g. "The <Topic> Loop").
-- For each: Name, Explanation (2 sentences), and Actionable Insight (how to use it tomorrow).
-
-8. Where This Episode Is Most Useful:
-- 5 bullets (e.g. "When you're deciding X...")
-
-9. Meta:
-- Attempt to find the YouTube Video ID for this episode if known or mentioned.
+5. META:
+- youtubeVideoId: string or null (do NOT guess)
 
 TRANSCRIPT:
 ${transcript}
@@ -138,65 +200,45 @@ ${transcript}
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "podcast_deep_summary",
+          name: "pm_dashboard_summary",
           schema: {
             type: "object",
             additionalProperties: false,
             properties: {
-              tldr: {
+              overview: {
                 type: "object",
                 additionalProperties: false,
                 properties: {
-                  coreTakeaways: { type: "array", items: { type: "string" } }
+                  executiveBrief: { type: "string" },
+                  coreTakeaways: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 5 }
                 },
-                required: ["coreTakeaways"]
+                required: ["executiveBrief", "coreTakeaways"]
               },
-              aboutSpeaker: {
-                type: "object",
-                additionalProperties: false,
-                properties: {
-                  who: { type: "string" },
-                  credibility: { type: "array", items: { type: "string" } },
-                  philosophy: { type: "string" },
-                },
-                required: ["who", "credibility", "philosophy"],
-              },
-              company: {
-                type: "object",
-                additionalProperties: false,
-                properties: {
-                  name: { type: "string" },
-                  businessModel: { type: "string" },
-                  customer: { type: "string" },
-                  winningLooksLike: { type: "string" },
-                  description: { type: "string" },
-                },
-                required: ["name", "businessModel", "customer", "winningLooksLike", "description"],
-              },
-              podcastSummary: {
-                type: "object",
-                additionalProperties: false,
-                properties: {
-                  paragraphs: { type: "array", items: { type: "string" } },
-                  majorPoints: { type: "array", items: { type: "string" } }
-                },
-                required: ["paragraphs", "majorPoints"]
-              },
-              keyHighlights: {
-                type: "array",
-                items: { type: "string" }, // RESTORED TO STRING ARRAY
-                minItems: 7,
-                maxItems: 7
-              },
-              memorableQuotes: {
+              insights: {
                 type: "array",
                 items: {
                   type: "object",
                   additionalProperties: false,
-                  properties: { quote: { type: "string" }, why: { type: "string" } },
-                  required: ["quote", "why"],
+                  properties: {
+                    tag: {
+                      type: "string",
+                      enum: ["Strategy", "Execution", "Growth", "Leadership", "Career", "GTM", "AI", "Product", "Research", "Metrics"]
+                    },
+                    insight: { type: "string" },
+                    evidence: {
+                      type: "object",
+                      additionalProperties: false,
+                      properties: {
+                        time: { type: "string" },
+                        cue: { type: "string" }
+                      },
+                      required: ["time", "cue"]
+                    }
+                  },
+                  required: ["tag", "insight", "evidence"]
                 },
-                minItems: 5, maxItems: 5
+                minItems: 8,
+                maxItems: 12
               },
               frameworks: {
                 type: "array",
@@ -205,27 +247,57 @@ ${transcript}
                   additionalProperties: false,
                   properties: {
                     name: { type: "string" },
-                    explanation: { type: "string" },
-                    actionableInsight: { type: "string" }
+                    whenToUse: { type: "string" },
+                    steps: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 7 },
+                    pitfalls: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 3 },
+                    evidence: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          time: { type: "string" },
+                          cue: { type: "string" }
+                        },
+                        required: ["time", "cue"]
+                      },
+                      minItems: 1,
+                      maxItems: 3
+                    }
                   },
-                  required: ["name", "explanation", "actionableInsight"],
+                  required: ["name", "whenToUse", "steps", "pitfalls", "evidence"]
                 },
-                maxItems: 4
+                maxItems: 3
               },
-              whereThisIsUseful: { type: "array", items: { type: "string" }, minItems: 5, maxItems: 5 },
+              about: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  speaker: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      who: { type: "string" },
+                      credibility: { type: "array", items: { type: "string" }, maxItems: 4 },
+                      philosophy: { type: ["string", "null"] }
+                    },
+                    required: ["who", "credibility", "philosophy"]
+                  },
+                  company: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      name: { type: "string" },
+                      context: { type: ["string", "null"] }
+                    },
+                    required: ["name", "context"]
+                  }
+                },
+                required: ["speaker", "company"]
+              },
               youtubeVideoId: { type: ["string", "null"] }
             },
-            required: [
-              "tldr",
-              "aboutSpeaker",
-              "company",
-              "podcastSummary",
-              "keyHighlights",
-              "memorableQuotes",
-              "frameworks",
-              "whereThisIsUseful",
-              "youtubeVideoId"
-            ],
+            required: ["overview", "insights", "frameworks", "about", "youtubeVideoId"],
           },
         },
       },

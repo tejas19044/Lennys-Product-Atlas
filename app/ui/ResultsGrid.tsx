@@ -32,7 +32,7 @@ function row(label: string, tags: string[], set: Set<string>, colorVar: string) 
       <strong
         style={{
           fontSize: 9,
-          color: "#4d5669",
+          color: "var(--label-muted)",
           minWidth: 75,
           textTransform: "uppercase",
           paddingTop: 2,
@@ -62,12 +62,12 @@ export default function ResultsGrid({ rows, selected, onOpen }: Props) {
             display: "flex",
             flexDirection: "column",
             cursor: "pointer",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLDivElement).style.borderColor = "var(--accent)";
             (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
-            (e.currentTarget as HTMLDivElement).style.background = "#181c27";
+            (e.currentTarget as HTMLDivElement).style.background = "var(--panel-hover)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)";
@@ -114,11 +114,11 @@ export default function ResultsGrid({ rows, selected, onOpen }: Props) {
                 fontStyle: "italic",
                 padding: 12,
                 background: "rgba(212, 175, 55, 0.05)",
-                borderRadius: 8,
+                borderRadius: "var(--radius)",
                 borderLeft: "2px solid var(--accent)",
               }}
             >
-              <span style={{ fontWeight: 900, fontStyle: "normal", fontSize: 9, color: "#4d5669", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: 10 }}>
+              <span style={{ fontWeight: 900, fontStyle: "normal", fontSize: 9, color: "var(--label-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: 10 }}>
                 Frameworks
               </span>
               {ep.frameworks}
@@ -129,7 +129,7 @@ export default function ResultsGrid({ rows, selected, onOpen }: Props) {
           <div
             style={{
               fontSize: 14,
-              color: "#b0bacd",
+              color: "var(--text-secondary)",
               lineHeight: 1.7,
               marginBottom: 24,
               flexGrow: 1,

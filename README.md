@@ -1,78 +1,97 @@
-# Podcast Atlas (MVP)
+# Product Atlas
 
-This is a **deployable** MVP for your PM decision-routing dashboard:
-- Loads your **CSV** (tagging database)
-- Filters by **Level 1–4 tags**
-- Opens a **Drawer** with a placeholder “API will be called here…” message + your prompt
-- Allows **Download Transcript** as a `.txt`
+**Decision-routing for PMs.** Filter Lenny's Podcast episodes by strategy, domain, and context—then generate AI-powered executive briefings in one click.
 
-## What you need to provide (your current assets)
-1) A single CSV file (exported from Google Sheets) containing at least these headers:
-   - Podcast Guest
-   - Company Name
-   - Company Description
-   - Level 1 Tags
-   - Level 2 Tags
-   - Level 3 Tags
-   - Level 4 Tags
-   - Frameworks
-   - CEO Summary
-
-2) A folder of transcript `.txt` files named **exactly like the guest** (example: `Alex Schultz.txt`).
-
-> If you have multiple episodes with the same guest name, we’ll rename transcripts to stable IDs automatically during prep.
+[![Powered by Lenny's Podcast](https://img.shields.io/badge/Powered%20by-Lenny's%20Podcast-d4af37?style=flat)](https://www.lennyspodcast.com/)
 
 ---
 
-## Step-by-step (local run)
+## The Problem
 
-### 1) Install Node.js
-Install **Node 18+** from nodejs.org (or via nvm).
+Lenny's Podcast is a goldmine of PM frameworks—but when you're under cognitive load, you need *the right episode*, *fast*. Scrolling through hundreds of hours isn't an option.
 
-### 2) Put your assets here
-- Put your CSV at: `data/episodes.csv`
-- Put transcripts in: `transcripts_raw/`
+## The Solution
 
-Folder structure:
-```
-data/episodes.csv
-transcripts_raw/<Guest Name>.txt
-```
+Product Atlas turns the catalog into a **queryable decision-routing tool**:
+- Filter by **10 PM domains** (Discovery, Strategy, Growth, AI, Leadership, etc.) and **62 sub-topics**
+- Narrow by **context** (B2B, Scale-up, Founder) and **thinking frame** (Systems Thinking, First Principles)
+- Get a **curated briefing prompt**—paste it into ChatGPT, Claude, Perplexity, or Gemini with the transcript for a tailored executive summary
 
-### 3) Prepare public assets (auto mapping)
-Run:
+**Not a summary app.** You route to the right episode, then use your preferred AI. The prompt handles the rest.
+
+---
+
+## Key Features
+
+| Feature | What it does |
+|---------|--------------|
+| **4-level taxonomy** | Core → Topics → Role → Strategy for precise filtering |
+| **AI briefing prompt** | One-click copy; paste in any AI with transcript for executive briefs |
+| **3-step flow** | Episode overview → pick learning style → pick focus → full briefing |
+| **Transcript download** | Grab the raw transcript when available |
+
+---
+
+## Tech Stack
+
+- **Next.js 14** (App Router) · **TypeScript**
+- **Static data**: CSV + JSON index (no DB)
+- **No in-app AI**: Prompt is copied; user pastes transcript in external AI
+
+---
+
+## Quick Start
+
 ```bash
 npm install
-npm run prep:data
-```
-
-This generates:
-- `public/data/episodes.csv`
-- `public/transcripts/<somefile>.txt`
-- `public/data/index.json` (mapping from row -> transcript filename)
-
-### 4) Run the app
-```bash
+npm run prep:data    # Copies CSV + transcripts, builds index
 npm run dev
 ```
-Open: http://localhost:3000
+
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Deploy to Vercel
-1) Create a GitHub repo and push this project.
-2) Import the repo into Vercel.
-3) In Vercel, set **Build Command** to:
-   - `npm run prep:data && npm run build`
-4) Deploy.
+## Project Structure
+
+```
+data/episodes.csv          # Source: guest, company, tags, frameworks, CEO summary
+transcripts_raw/           # Source transcripts (named to match guest)
+scripts/prep-data.mjs      # Builds public/data/ + index.json
+app/api/briefing-prompt/   # Generates prompt for ChatGPT/Claude/etc.
+System Prompts.md          # Prompt variants (V2–V4)
+```
 
 ---
 
-## Customizing the Prompt
-Edit `app/lib/prompt.ts` and replace `PROMPT_TEXT`.
+## Taxonomy (PM Lens)
+
+- **Level 1 (Core):** Product Discovery, Strategy, Execution, Design, Growth, Retention, GTM, AI PM, Leadership, Career
+- **Level 2 (Topics):** 62 mechanism tags (e.g. Product-Market Fit, PLG, Marketplace Dynamics)
+- **Level 3 (Role):** B2B, B2C, IC, Manager, Founder, Scale-up
+- **Level 4 (Strategy):** Systems Thinking, First Principles, Trade Offs, etc.
+
+See `Level 1 to Level 2 Mapping.md` for the full taxonomy.
 
 ---
 
-## Notes
-- This MVP is static-friendly: transcripts are served from `public/transcripts`.
-- The Drawer includes a clear placeholder for future API summarization.
+## Deploy (Vercel)
+
+1. Push to GitHub.
+2. Import repo in [Vercel](https://vercel.com).
+3. Build command: `npm run prep:data && npm run build`
+4. Deploy.
+
+No env vars required for the core flow; briefing prompt API runs serverless.
+
+---
+
+## Built By
+
+**Tejas Dhekane** — PM building tools for PMs.
+
+---
+
+## License
+
+MIT

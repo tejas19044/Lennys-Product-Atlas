@@ -7,3 +7,6 @@ dist
 public/data/*.csv
 public/transcripts_raw/
 public/transcripts/
+.claude/
+nimbalyst-local/
+tsconfig.tsbuildinfo

@@ -64,22 +64,19 @@ export default function Sidebar({
           background: "var(--panel)",
           padding: 20,
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius2)",
         }}
       >
         {/* ✅ Company filter dropdown (luxury select) */}
         <select
+          className="sidebar-select"
           value={selectedCompany}
           onChange={(e) => setSelectedCompany(e.target.value)}
           style={{
             width: "100%",
-            background: "#00000060",
-            border: "1px solid var(--border)",
-            color: "#fff",
+            color: "var(--text)",
             padding: 12,
-            borderRadius: 8,
             marginBottom: 12,
-            outline: "none",
             fontSize: 13,
             appearance: "none",
           }}
@@ -94,23 +91,21 @@ export default function Sidebar({
 
         {/* Episode search */}
         <input
+          className="sidebar-input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter expertise tags... (search episodes)"
           style={{
             width: "100%",
-            background: "#00000060",
-            border: "1px solid var(--border)",
-            color: "#fff",
+            color: "var(--text)",
             padding: 12,
-            borderRadius: 8,
             marginBottom: 12,
-            outline: "none",
             fontSize: 13,
           }}
         />
 
         <button
+          className="sidebar-btn"
           onClick={onClear}
           style={{
             width: "100%",
@@ -118,13 +113,12 @@ export default function Sidebar({
             border: "1px solid var(--border)",
             color: "var(--muted)",
             padding: 10,
-            borderRadius: 8,
+            borderRadius: "var(--radius)",
             cursor: "pointer",
             fontSize: 10,
             fontWeight: 800,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            transition: "0.2s",
           }}
           title="Clear all filters"
         >
@@ -149,7 +143,7 @@ export default function Sidebar({
             style={{
               background: "var(--panel)",
               border: "1px solid var(--border)",
-              borderRadius: 12,
+              borderRadius: "var(--radius2)",
               padding: 14,
               borderLeft: `${idx === 3 ? 4 : 3}px solid var(${levelMeta[k].colorVar})`,
             }}
@@ -184,7 +178,7 @@ export default function Sidebar({
                     onClick={() => onToggle(k, tag)}
                     style={{
                       padding: "5px 12px",
-                      borderRadius: 6,
+                      borderRadius: "var(--radius)",
                       fontSize: 11,
                       background: bg,
                       cursor: "pointer",
