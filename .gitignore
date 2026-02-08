@@ -5,8 +5,12 @@ dist
 .env*
 .DS_Store
 public/data/*.csv
+public/data/index.json
 public/transcripts_raw/
 public/transcripts/
 .claude/
 nimbalyst-local/
 tsconfig.tsbuildinfo
+*.zip
+*.docx
+transcripts_raw/README_put_txt_here.txt
